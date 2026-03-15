@@ -44,9 +44,12 @@ export function RateLimitTester() {
 
       const ts = new Date().toLocaleTimeString();
       try {
-        const res = await fetch(`${BASE_URL}/api/test/limited`, {
-          cache: "no-store",
-        });
+       const res = await fetch(`${BASE_URL}/api/test/limited`, {
+         cache: "no-store",
+         headers: {
+           "x-user-id": "demo-user", // fixed identifier — har request same bucket
+         },
+       });
         const status = res.status as 200 | 429;
         let retryAfter: number | undefined;
 
