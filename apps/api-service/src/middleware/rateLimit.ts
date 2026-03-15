@@ -6,7 +6,7 @@ import { RedisKeys } from "../utils/redisKeys";
 
 const DEFAULT_CONFIG = {
   capacity: 10, // Max 10 requests in the bucket
-  refillRate: 0.2, // Refill 5 tokens per second
+  refillRate: 0.05, // Refill 5 tokens per second
 };
 
 /**
