@@ -5,7 +5,7 @@ import { redis } from "../config/redis";
 import { RedisKeys } from "../utils/redisKeys";
 
 const DEFAULT_CONFIG = {
-  capacity: 10, // Max 10 requests in the bucket
+  capacity: 3, // Max 10 requests in the bucket
   refillRate: 0.05, // Refill 5 tokens per second
 };
 
@@ -24,21 +24,25 @@ export async function rateLimit(
   res: Response,
   next: NextFunction,
 ) {
-    console.log("RAW IP:", req.ip);
-    console.log(
-      "IDENTIFIER:",
-      (req.headers["x-user-id"] as string) || req.ip || "anonymous",
-    );
+  console.log("RAW IP:", req.ip);
+  console.log(
+    "IDENTIFIER:",
+    (req.headers["x-user-id"] as string) || req.ip || "anonymous",
+  );
+
   // Skip rate limiting for CORS preflight and favicon requests
   if (req.method === "OPTIONS" || req.path === "/favicon.ico") {
     return next();
   }
 
   try {
+    const forwarded = (req.headers["x-forwarded-for"] as string)
+      ?.split(",")[0]
+      ?.trim();
     const identifier =
       (req.headers["x-user-id"] as string) || req.ip || "anonymous";
     const endpoint = req.originalUrl.split("?")[0]; // Strip query params
-
+    console.log("IDENTIFIER:", identifier);
     const result = await checkRateLimit({
       identifier,
       endpoint,

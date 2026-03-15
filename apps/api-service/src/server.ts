@@ -9,14 +9,17 @@ dotenv.config();
 
 const app = express();
 
+// Trust Railway/Vercel proxy — ZAROORI hai real IP ke liye
+app.set("trust proxy", true);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({ origin: "*" })); // sabhi origins allow — CORS issue nahi hoga
 
 // Routes
-app.use("/api/test", testRoutes); // Rate-limited test endpoints
-app.use("/api", analyticsRoutes); // Analytics dashboard endpoints
+app.use("/api/test", testRoutes);
+app.use("/api", analyticsRoutes);
 
 // Health check
 app.get("/health", (_req, res) => {
@@ -40,18 +43,9 @@ app.use(
   },
 );
 
-// Start server
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, async () => {
   await testDb();
   console.log(`🚀 Rate Limiter API running on port ${PORT}`);
 });
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://your-vercel-app.vercel.app", // Vercel deploy hone ke baad add karna
-    ],
-  }),
-);
