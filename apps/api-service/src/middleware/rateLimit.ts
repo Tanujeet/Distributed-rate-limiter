@@ -40,7 +40,10 @@ export async function rateLimit(
       ?.split(",")[0]
       ?.trim();
     const identifier =
-      (req.headers["x-user-id"] as string) || req.ip || "anonymous";
+      (req.headers["x-user-id"] as string) ||
+      forwarded ||
+      req.ip ||
+      "anonymous";
     const endpoint = req.originalUrl.split("?")[0]; // Strip query params
     console.log("IDENTIFIER:", identifier);
     const result = await checkRateLimit({
