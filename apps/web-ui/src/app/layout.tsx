@@ -12,19 +12,27 @@ export const metadata: Metadata = {
   description: "Distributed Rate Limiter Analytics",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <div className="flex h-screen overflow-hidden bg-background">
-            {/* Sidebar: fixed left column */}
+            {/* Sidebar: fixed left column on desktop, slide-out drawer on mobile */}
             <Sidebar />
 
             {/* Main content: header + scrollable page */}
-            <div className="flex flex-col flex-1 overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden">
               <Header />
-              <main className="flex-1 overflow-y-auto p-6">{children}</main>
+
+              {/* Responsive padding so mobile screens don't waste horizontal space */}
+              <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+                {children}
+              </main>
             </div>
           </div>
         </ThemeProvider>
