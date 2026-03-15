@@ -39,7 +39,7 @@ export function RateLimitTester() {
     let allowedCount = 0;
     let blockedCount = 0;
 
-    for (let i = 1; i <= 15; i++) {
+    for (let i = 1; i <= 20; i++) {
       if (stopRef.current) break;
 
       const ts = new Date().toLocaleTimeString();
@@ -79,7 +79,7 @@ export function RateLimitTester() {
         setBlocked(blockedCount);
       }
 
-      await sleep(120);
+      await sleep(50);
     }
 
     setRunning(false);
