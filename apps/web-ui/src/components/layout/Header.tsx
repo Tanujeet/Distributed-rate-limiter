@@ -7,14 +7,18 @@ export function Header() {
   const { setTheme, theme } = useTheme();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
-      <h2 className="text-lg font-semibold tracking-tight">
+    // Added shrink-0 and responsive padding
+    <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background px-4 sm:px-6">
+      <h2 className="truncate text-base font-semibold tracking-tight sm:text-lg">
         Distributed Rate Limiter Dashboard
       </h2>
+
+      {/* Added shrink-0 to prevent the button from getting squished by the long text */}
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+        className="shrink-0"
       >
         <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
         <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />

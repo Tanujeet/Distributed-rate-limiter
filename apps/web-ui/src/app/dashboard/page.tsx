@@ -32,48 +32,58 @@ export default function DashboardPage() {
   if (loading)
     return (
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Metric Cards Skeletons */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-32 w-full" />
           ))}
         </div>
-        <div className="grid gap-4 lg:grid-cols-7">
-          <Skeleton className="col-span-4 h-87.5 w-full" />
-          <Skeleton className="col-span-3 h-87.5 w-full" />
+        {/* Main Content Skeletons */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
+          <Skeleton className="h-87.5 w-full lg:col-span-4" />
+          <Skeleton className="h-87.5 w-full lg:col-span-3" />
         </div>
       </div>
     );
 
   if (error || !data)
     return (
-      <div className="flex items-center gap-2 text-destructive p-4 border border-destructive/50 rounded-md bg-destructive/10">
-        <AlertCircle className="h-5 w-5" />
+      <div className="flex items-center gap-3 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive md:text-base">
+        <AlertCircle className="h-5 w-5 shrink-0" />
         <p>Backend connection error: Ensure API is running on port 4000.</p>
       </div>
     );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">System Overview</h1>
+    <div className="animate-in fade-in space-y-6 duration-500">
+      {/* Responsive Header */}
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          System Overview
+        </h1>
         <Button
           variant="outline"
           size="sm"
           onClick={fetchData}
-          className="gap-2"
+          className="w-full gap-2 sm:w-auto"
         >
           <RefreshCw className="h-4 w-4" />
           Refresh
         </Button>
       </div>
 
+      {/* Metric Cards (Ensure your MetricCards component uses grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 internally) */}
       <MetricCards data={data.metrics} />
 
-      <div className="grid gap-4 lg:grid-cols-7">
-        <div className="lg:col-span-4 space-y-4">
+      {/* Main Responsive Layout */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
+        {/* Left Column (Charts & Tester) */}
+        <div className="space-y-4 lg:col-span-4">
           <RateLimitTester />
           <RequestsChart data={data.timeline} />
         </div>
+
+        {/* Right Column (Tables) */}
         <div className="lg:col-span-3">
           <TopEndpointsTable endpoints={data.topEndpoints} />
         </div>

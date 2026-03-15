@@ -16,12 +16,14 @@ export function RequestsChart({ data }: { data: ChartData[] }) {
   // Show empty state if no data yet
   if (!data || data.length === 0) {
     return (
-      <Card className="col-span-4 shadow-sm">
+      <Card className="w-full shadow-sm">
         <CardHeader>
-          <CardTitle>Requests Over Time</CardTitle>
+          <CardTitle className="text-base sm:text-lg">
+            Requests Over Time
+          </CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-[350px]">
-          <p className="text-muted-foreground text-sm">
+        <CardContent className="flex h-[250px] items-center justify-center sm:h-[350px]">
+          <p className="px-4 text-center text-sm text-muted-foreground">
             No traffic recorded yet. Make some requests to see data here.
           </p>
         </CardContent>
@@ -30,17 +32,20 @@ export function RequestsChart({ data }: { data: ChartData[] }) {
   }
 
   return (
-    <Card className="col-span-4 shadow-sm">
+    <Card className="w-full shadow-sm">
       <CardHeader>
-        <CardTitle>Requests Over Time</CardTitle>
+        <CardTitle className="text-base sm:text-lg">
+          Requests Over Time
+        </CardTitle>
       </CardHeader>
-      <CardContent className="pl-0">
-        {/* FIX: h-87.5 is not a valid Tailwind class — replaced with inline style */}
-        <div style={{ height: 350 }} className="w-full">
+      {/* Adjusted padding to prevent Y-axis cutoff on narrow mobile screens */}
+      <CardContent className="px-2 pb-4 sm:px-6">
+        {/* Replaced inline style with responsive Tailwind heights */}
+        <div className="h-[250px] w-full sm:h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={data}
-              margin={{ top: 5, right: 20, left: 10, bottom: 0 }}
+              margin={{ top: 5, right: 10, left: -15, bottom: 0 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -53,6 +58,7 @@ export function RequestsChart({ data }: { data: ChartData[] }) {
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
+                minTickGap={20} // Prevents label collision on mobile
               />
               <YAxis
                 stroke="#888888"
@@ -66,10 +72,11 @@ export function RequestsChart({ data }: { data: ChartData[] }) {
                   backgroundColor: "hsl(var(--card))",
                   borderColor: "hsl(var(--border))",
                   borderRadius: "8px",
+                  fontSize: "12px",
                 }}
                 itemStyle={{ color: "hsl(var(--foreground))" }}
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />
               <Line
                 type="monotone"
                 dataKey="allowed"
