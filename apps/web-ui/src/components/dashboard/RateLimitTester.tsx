@@ -17,6 +17,8 @@ const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace("/api/analytics", "") ||
   "http://localhost:4000";
 
+const TOTAL_REQUESTS = 15; // Extracted as a constant to prevent mismatched numbers
+
 export function RateLimitTester() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [running, setRunning] = useState(false);
@@ -39,17 +41,18 @@ export function RateLimitTester() {
     let allowedCount = 0;
     let blockedCount = 0;
 
-    for (let i = 1; i <= 20; i++) {
+    // FIX: Synced loop limit with the UI text and progress bar math
+    for (let i = 1; i <= TOTAL_REQUESTS; i++) {
       if (stopRef.current) break;
 
       const ts = new Date().toLocaleTimeString();
       try {
-       const res = await fetch(`${BASE_URL}/api/test/limited`, {
-         cache: "no-store",
-         headers: {
-           "x-user-id": "demo-user", // fixed identifier — har request same bucket
-         },
-       });
+        const res = await fetch(`${BASE_URL}/api/test/limited`, {
+          cache: "no-store",
+          headers: {
+            "x-user-id": "demo-user", // fixed identifier — har request same bucket
+          },
+        });
         const status = res.status as 200 | 429;
         let retryAfter: number | undefined;
 
@@ -104,50 +107,51 @@ export function RateLimitTester() {
   const blockRate = count > 0 ? Math.round((blocked / count) * 100) : 0;
 
   return (
-    <Card className="shadow-sm border border-border">
+    <Card className="border border-border shadow-sm">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
+        {/* Responsive Header Layout */}
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
             <Zap className="h-4 w-4 text-yellow-500" />
             Live Rate Limit Tester
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex w-full gap-2 sm:w-auto">
             <Button
               size="sm"
               variant="outline"
               onClick={reset}
               disabled={running}
-              className="h-7 px-2"
+              className="h-8 px-2"
             >
-              <RotateCcw className="h-3 w-3" />
+              <RotateCcw className="h-3.5 w-3.5" />
             </Button>
             {running ? (
               <Button
                 size="sm"
                 variant="destructive"
                 onClick={stop}
-                className="h-7 px-3 text-xs"
+                className="h-8 flex-1 px-3 text-xs sm:flex-none"
               >
-                <Square className="h-3 w-3 mr-1" />
+                <Square className="mr-1 h-3 w-3" />
                 Stop
               </Button>
             ) : (
               <Button
                 size="sm"
                 onClick={runTest}
-                className="h-7 px-3 text-xs bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
+                className="h-8 flex-1 bg-yellow-500 px-3 text-xs font-semibold text-black hover:bg-yellow-600 sm:flex-none"
               >
-                <Zap className="h-3 w-3 mr-1" />
-                Fire 15 Requests
+                <Zap className="mr-1 h-3 w-3" />
+                Fire {TOTAL_REQUESTS} Requests
               </Button>
             )}
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
-        {/* Stats row */}
-        <div className="grid grid-cols-4 gap-2">
+      <CardContent className="space-y-4">
+        {/* Responsive Stats row */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
             { label: "Fired", value: count, color: "text-foreground" },
             { label: "Allowed", value: allowed, color: "text-emerald-500" },
@@ -161,7 +165,7 @@ export function RateLimitTester() {
           ].map((s) => (
             <div
               key={s.label}
-              className="bg-muted/40 rounded-md p-2 text-center"
+              className="rounded-md bg-muted/40 p-2 text-center"
             >
               <div className={cn("text-lg font-bold tabular-nums", s.color)}>
                 {s.value}
@@ -173,52 +177,59 @@ export function RateLimitTester() {
 
         {/* Progress bar */}
         {running && (
-          <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full bg-yellow-500 transition-all duration-100 rounded-full"
-              style={{ width: `${(count / 15) * 100}%` }}
+              className="h-full rounded-full bg-yellow-500 transition-all duration-100"
+              style={{ width: `${(count / TOTAL_REQUESTS) * 100}%` }}
             />
           </div>
         )}
 
-        {/* Log */}
-        <div className="bg-muted/30 rounded-md border border-border/50 h-48 overflow-y-auto p-2 font-mono text-xs space-y-1">
+        {/* Log Area */}
+        <div className="h-48 space-y-1 overflow-y-auto rounded-md border border-border/50 bg-muted/30 p-2 font-mono text-xs">
           {logs.length === 0 && (
-            <p className="text-muted-foreground text-center mt-16">
-              Click "Fire 15 Requests" to test rate limiting live
+            <p className="mt-16 text-center text-muted-foreground">
+              Click "Fire {TOTAL_REQUESTS} Requests" to test rate limiting live
             </p>
           )}
           {logs.map((log) => (
             <div
               key={log.id}
               className={cn(
-                "flex items-center gap-2 px-2 py-1 rounded",
+                "flex items-center gap-2 rounded px-2 py-1.5",
                 log.status === 200 ? "bg-emerald-500/10" : "bg-red-500/10",
               )}
             >
-              <span className="text-muted-foreground w-6 text-right">
+              <span className="w-5 shrink-0 text-right text-muted-foreground sm:w-6">
                 #{log.requestNum}
               </span>
               <span
                 className={cn(
-                  "font-bold w-8",
+                  "w-8 shrink-0 font-bold",
                   log.status === 200 ? "text-emerald-500" : "text-red-500",
                 )}
               >
                 {log.status}
               </span>
-              <span className="text-muted-foreground flex-1">
+              {/* Added truncate so long retry strings don't break layout on mobile */}
+              <span className="flex-1 truncate text-muted-foreground">
                 {log.status === 200
-                  ? "Request allowed"
+                  ? "Allowed"
                   : `Too Many Requests${log.retryAfter ? ` — retry in ${log.retryAfter}s` : ""}`}
               </span>
-              <span className="text-muted-foreground/60">{log.timestamp}</span>
+              {/* Hidden on very small screens to save space */}
+              <span className="hidden text-muted-foreground/60 sm:inline-block">
+                {log.timestamp}
+              </span>
             </div>
           ))}
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Hits <code className="bg-muted px-1 rounded">/api/test/limited</code>{" "}
+          Hits{" "}
+          <code className="rounded bg-muted px-1 py-0.5">
+            /api/test/limited
+          </code>{" "}
           — bucket capacity 10, blocks after limit exceeded
         </p>
       </CardContent>
