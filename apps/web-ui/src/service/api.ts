@@ -1,8 +1,8 @@
 import { OverviewData, EndpointAnalytics, IpAnalytics } from "@/types";
 
 // Backend runs on port 4000 — make sure your .env or server.ts matches
-const BASE_URL = "http://localhost:4000/api/analytics";
-
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/analytics";
 export const api = {
   /**
    * Fetches global stats for the main dashboard.
