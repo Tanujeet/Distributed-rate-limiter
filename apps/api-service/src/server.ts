@@ -41,9 +41,17 @@ app.use(
 );
 
 // Start server
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, async () => {
   await testDb();
   console.log(`🚀 Rate Limiter API running on port ${PORT}`);
 });
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://your-vercel-app.vercel.app", // Vercel deploy hone ke baad add karna
+    ],
+  }),
+);
