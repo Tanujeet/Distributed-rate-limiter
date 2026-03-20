@@ -3,19 +3,18 @@ import dotenv from "dotenv";
 import cors from "cors";
 import testRoutes from "./routes/test.routes";
 import analyticsRoutes from "./routes/analyticsRoutes";
-import { testDb } from "./utils/testDb";
 
 dotenv.config();
 
 const app = express();
 
-// Trust Railway/Vercel proxy — ZAROORI hai real IP ke liye
+// Trust Railway/Vercel proxy
 app.set("trust proxy", true);
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: "*" })); // sabhi origins allow — CORS issue nahi hoga
+app.use(cors({ origin: "*" })); 
 
 // Routes
 app.use("/api/test", testRoutes);
@@ -46,6 +45,6 @@ app.use(
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, async () => {
-  await testDb();
+
   console.log(`🚀 Rate Limiter API running on port ${PORT}`);
 });
