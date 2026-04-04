@@ -3,8 +3,6 @@ name: Deploy Rate Limiter API
 on:
   push:
     branches: [main]
-    paths:
-      - 'apps/api-service/**'
 
 jobs:
   deploy:
