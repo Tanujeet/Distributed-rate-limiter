@@ -9,7 +9,7 @@ if (!process.env.REDIS_URL) {
 
 /**
  * Redis client used across the application
- * Single instance to avoid creating multiple connections
+ *tiple connections Single instance to avoid creating mul
  */
 export const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: 3,
