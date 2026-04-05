@@ -32,77 +32,12 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Container Apps
-        uses: azure/CLI@v2          # ✅ v1 → v2
+        uses: azure/CLI@v2
         with:
-          azcliversion: latest      # ✅ 2.50.0 → latest
+          azcliversion: latest
           inlineScript: |
             az extension add --name containerapp --upgrade --yes
 
-            # Check if app exists, then create or update accordingly
-            if az containerapp show \
-                --name rate-limiter-api \
-                --resource-group distributed-cron-rg \
-                --output none 2>/dev/null; then
-              echo "App exists, updating..."
-              az containerapp update \
-                --name rate-limiter-api \
-                --resource-group distributed-cron-rg \
-                --image distcronregistry.azurecr.io/rate-limiter-api:latest
-            else
-              echo "App not found, creating..."
-              az containerapp create \
-                --name rate-limiter-api \
-                --resource-group distributed-cron-rg \
-                --environment distributed-cron-env \
-                --image distcronregistry.azurecr.io/rate-limiter-api:latest \
-                --registry-server distcronregistry.azurecr.io \
-                --registry-username ${{ secrets.REGISTRY_USERNAME }} \
-                --registry-password ${{ secrets.REGISTRY_PASSWORD }} \
-                --target-port 3000 \
-                --ingress external \
-                --min-replicas 0 \
-                --max-replicas 1
-            finame: Deploy Rate Limiter API
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Login to Azure Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: distcronregistry.azurecr.io
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./apps/api-service
-          push: true
-          tags: distcronregistry.azurecr.io/rate-limiter-api:latest
-
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure Container Apps
-        uses: azure/CLI@v2          # ✅ v1 → v2
-        with:
-          azcliversion: latest      # ✅ 2.50.0 → latest
-          inlineScript: |
-            az extension add --name containerapp --upgrade --yes
-
-            # Check if app exists, then create or update accordingly
             if az containerapp show \
                 --name rate-limiter-api \
                 --resource-group distributed-cron-rg \
