@@ -21,7 +21,14 @@ app.use("/api/test", testRoutes);
 app.use("/api", analyticsRoutes);
 
 // Health check
-app.get("/health", (_req, res) => {
+app.get("/health", (req, res) => {
+  if (process.env.PROXY_DIAGNOSTICS === "1" && req.query.proxyCheck === "1") {
+    console.log("[PROXY_CHECK]", JSON.stringify({
+      remoteAddress: req.socket.remoteAddress,
+      forwardedFor: req.get("x-forwarded-for"),
+      clientIp: req.ip,
+    }));
+  }
   res.status(200).json({
     success: true,
     message: "Rate limiter service is running",
