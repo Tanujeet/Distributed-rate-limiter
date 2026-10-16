@@ -9,12 +9,12 @@ dotenv.config();
 const app = express();
 
 // Trust Railway/Vercel proxy
-app.set("trust proxy", true);
+app.set("trust proxy", process.env.TRUST_PROXY?.split(",").map((value) => value.trim()) || false);
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: "*" })); 
+app.use(cors({ origin: "*", exposedHeaders: ["Retry-After", "X-RateLimit-Remaining"] }));
 
 // Routes
 app.use("/api/test", testRoutes);
@@ -42,7 +42,7 @@ app.use(
   },
 );
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, async () => {
 

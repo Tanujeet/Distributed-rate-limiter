@@ -14,7 +14,7 @@ async function getTimeline(key: string, limit = 20) {
 
   const times = Array.from(
     new Set([...Object.keys(allowed), ...Object.keys(blocked)]),
-  ).sort();
+  ).filter((time) => /^\d{4}-\d{2}-\d{2}T/.test(time)).sort();
 
   return times
     .map((time) => ({
@@ -47,7 +47,12 @@ router.get("/analytics/overview", async (req, res) => {
     );
     const topEndpoints = [];
     for (let i = 0; i < raw.length; i += 2) {
-      topEndpoints.push({ path: raw[i], hits: Number(raw[i + 1]), blocked: 0 });
+      const blocked = await redis.hvals(`analytics:timeline:${raw[i]}:blocked`);
+      topEndpoints.push({
+        path: raw[i],
+        hits: Number(raw[i + 1]),
+        blocked: blocked.reduce((total, count) => total + Number(count), 0),
+      });
     }
 
     res.json({
@@ -92,7 +97,16 @@ router.get("/analytics/ip/:identifier", async (req, res) => {
     const { identifier } = req.params;
     const requests = await redis.get(RedisKeys.ipRequests(identifier));
 
-    res.json({ identifier, requests: Number(requests || 0) });
+    const endpoint = "/api/test/limited";
+    const isBlocked = await redis.eval(
+      `local clock = redis.call('TIME')
+       local now = tonumber(clock[1]) * 1000 + tonumber(clock[2]) / 1000
+       local untilTime = tonumber(redis.call('HGET', KEYS[1], 'blockedUntil')) or 0
+       return untilTime > now and 1 or 0`,
+      1,
+      RedisKeys.tokenBucket(identifier, endpoint),
+    );
+    res.json({ identifier, endpoint, requests: Number(requests || 0), isBlocked: isBlocked === 1 });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch IP analytics" });
   }

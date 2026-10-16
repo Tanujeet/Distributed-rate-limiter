@@ -21,7 +21,7 @@ router.get("/unlimited", (req: Request, res: Response) => {
 // 👈 LOAD TEST ROUTE
 router.get("/load-test", async (req: Request, res: Response) => {
   const totalRequests = 300;
-  const results = { allowed: 0, blocked: 0, totalMs: 0 };
+  const results = { allowed: 0, blocked: 0, errors: 0, totalMs: 0 };
   const latencies: number[] = [];
 
   const start = Date.now();
@@ -32,32 +32,24 @@ router.get("/load-test", async (req: Request, res: Response) => {
     // Simulate different IPs to test cross-client isolation
     const fakeReq = {
       method: "GET",
-      path: "/test/limited",
-      originalUrl: "/test/limited",
+      path: "/api/test/limited",
+      originalUrl: "/api/test/limited",
       ip: `192.168.1.${i % 10}`, // 10 different IPs
-      headers: { "x-user-id": `user-${i % 10}` },
+      headers: {},
     } as unknown as Request;
 
     const fakeRes = {
       setHeader: () => {},
-      status: () => ({ json: () => {} }),
+      status: (code: number) => {
+        if (code === 429) results.blocked++;
+        else results.errors++;
+        return { json: () => {} };
+      },
       json: () => {},
     } as unknown as Response;
 
-    await new Promise<void>((resolve) => {
-      rateLimit(fakeReq, fakeRes, () => {
-        results.allowed++;
-        resolve();
-      });
-
-      // Check if blocked via status
-      const originalStatus = fakeRes.status;
-      fakeRes.status = (code: number) => {
-        if (code === 429) results.blocked++;
-        return originalStatus.call(fakeRes, code);
-      };
-
-      resolve();
+    await rateLimit(fakeReq, fakeRes, () => {
+      results.allowed++;
     });
 
     const latency = Date.now() - reqStart;
@@ -83,6 +75,7 @@ router.get("/load-test", async (req: Request, res: Response) => {
     totalMs: results.totalMs,
     allowed: results.allowed,
     blocked: results.blocked,
+    errors: results.errors,
     latency: { p50, p99, avg },
   });
 });

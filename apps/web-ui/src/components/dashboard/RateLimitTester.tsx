@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,7 @@ import { Zap, RotateCcw, Square } from "lucide-react";
 interface LogEntry {
   id: number;
   requestNum: number;
-  status: 200 | 429;
+  status: number | null;
   timestamp: string;
   retryAfter?: number;
 }
@@ -25,16 +25,29 @@ export function RateLimitTester() {
   const [count, setCount] = useState(0);
   const [allowed, setAllowed] = useState(0);
   const [blocked, setBlocked] = useState(0);
+  const [errors, setErrors] = useState(0);
   const stopRef = useRef(false);
   const idRef = useRef(0);
+  const runningRef = useRef(false);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => {
+    stopRef.current = true;
+    controllerRef.current?.abort();
+  }, []);
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   const runTest = async () => {
+    if (runningRef.current) return;
+    runningRef.current = true;
+    const controller = new AbortController();
+    controllerRef.current = controller;
     setLogs([]);
     setCount(0);
     setAllowed(0);
     setBlocked(0);
+    setErrors(0);
     setRunning(true);
     stopRef.current = false;
 
@@ -46,23 +59,25 @@ export function RateLimitTester() {
       if (stopRef.current) break;
 
       const ts = new Date().toLocaleTimeString();
+      setCount(i);
       try {
         const res = await fetch(`${BASE_URL}/api/test/limited`, {
           cache: "no-store",
-          headers: {
-            "x-user-id": "demo-user", // fixed identifier — har request same bucket
-          },
+          signal: controller.signal,
         });
-        const status = res.status as 200 | 429;
+        if (stopRef.current) break;
+        const status = res.status;
         let retryAfter: number | undefined;
 
         if (status === 429) {
           retryAfter = Number(res.headers.get("Retry-After") || 0);
           blockedCount++;
           setBlocked(blockedCount);
-        } else {
+        } else if (res.ok) {
           allowedCount++;
           setAllowed(allowedCount);
+        } else {
+          setErrors((value) => value + 1);
         }
 
         setCount(i);
@@ -77,23 +92,25 @@ export function RateLimitTester() {
           ...prev,
         ]);
       } catch {
+        if (stopRef.current) break;
         setLogs((prev) => [
-          { id: idRef.current++, requestNum: i, status: 429, timestamp: ts },
+          { id: idRef.current++, requestNum: i, status: null, timestamp: ts },
           ...prev,
         ]);
-        blockedCount++;
-        setBlocked(blockedCount);
+        setErrors((value) => value + 1);
       }
 
       await sleep(50);
     }
 
+    runningRef.current = false;
+    controllerRef.current = null;
     setRunning(false);
   };
 
   const stop = () => {
     stopRef.current = true;
-    setRunning(false);
+    controllerRef.current?.abort();
   };
 
   const reset = () => {
@@ -101,6 +118,7 @@ export function RateLimitTester() {
     setCount(0);
     setAllowed(0);
     setBlocked(0);
+    setErrors(0);
     stopRef.current = false;
   };
 
@@ -151,11 +169,12 @@ export function RateLimitTester() {
 
       <CardContent className="space-y-4">
         {/* Responsive Stats row */}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {[
             { label: "Fired", value: count, color: "text-foreground" },
             { label: "Allowed", value: allowed, color: "text-emerald-500" },
             { label: "Blocked", value: blocked, color: "text-red-500" },
+            { label: "Errors", value: errors, color: "text-red-500" },
             {
               label: "Block %",
               value: `${blockRate}%`,
@@ -189,7 +208,7 @@ export function RateLimitTester() {
         <div className="h-48 space-y-1 overflow-y-auto rounded-md border border-border/50 bg-muted/30 p-2 font-mono text-xs">
           {logs.length === 0 && (
             <p className="mt-16 text-center text-muted-foreground">
-              Click "Fire {TOTAL_REQUESTS} Requests" to test rate limiting live
+              Click &quot;Fire {TOTAL_REQUESTS} Requests&quot; to test rate limiting live
             </p>
           )}
           {logs.map((log) => (
@@ -209,13 +228,15 @@ export function RateLimitTester() {
                   log.status === 200 ? "text-emerald-500" : "text-red-500",
                 )}
               >
-                {log.status}
+                {log.status ?? "ERR"}
               </span>
               {/* Added truncate so long retry strings don't break layout on mobile */}
               <span className="flex-1 truncate text-muted-foreground">
                 {log.status === 200
                   ? "Allowed"
-                  : `Too Many Requests${log.retryAfter ? ` — retry in ${log.retryAfter}s` : ""}`}
+                  : log.status === 429
+                    ? `Too Many Requests${log.retryAfter ? ` — retry in ${log.retryAfter}s` : ""}`
+                    : log.status === null ? "Network error" : "Request failed"}
               </span>
               {/* Hidden on very small screens to save space */}
               <span className="hidden text-muted-foreground/60 sm:inline-block">
@@ -230,7 +251,7 @@ export function RateLimitTester() {
           <code className="rounded bg-muted px-1 py-0.5">
             /api/test/limited
           </code>{" "}
-          — bucket capacity 10, blocks after limit exceeded
+          — bucket capacity 3, refills one request every 20 seconds
         </p>
       </CardContent>
     </Card>

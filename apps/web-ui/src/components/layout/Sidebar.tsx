@@ -14,11 +14,12 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [previousPath, setPreviousPath] = useState(pathname);
 
-  // Auto-close the mobile sidebar when navigating to a new route
-  useEffect(() => {
+  if (previousPath !== pathname) {
+    setPreviousPath(pathname);
     setIsOpen(false);
-  }, [pathname]);
+  }
 
   // Prevent background scrolling when the mobile menu is open
   useEffect(() => {

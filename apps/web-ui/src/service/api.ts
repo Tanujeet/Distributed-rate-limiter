@@ -55,10 +55,6 @@ export const api = {
   /**
    * Fetches request count for a specific IP or user identifier.
    * Backend: GET /api/analytics/ip/:identifier
-   *
-   * NOTE: Backend doesn't return isBlocked — to add this you'd need a Redis
-   * key that tracks blocked state per IP (e.g. `analytics:ip:blocked:<ip>`).
-   * For now isBlocked is derived: if requestCount > threshold, mark as suspicious.
    */
   async getIp(identifier: string): Promise<IpAnalytics> {
     const res = await fetch(
@@ -73,9 +69,7 @@ export const api = {
     return {
       ip: data.identifier || identifier,
       requestCount,
-      // Treat as "blocked" if they've hit more than 100 requests
-      // Replace with real backend data once you add blocked tracking
-      isBlocked: requestCount > 100,
+      isBlocked: data.isBlocked === true,
     };
   },
 };

@@ -26,7 +26,12 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    let active = true;
+    api.getOverview()
+      .then((value) => { if (active) setData(value); })
+      .catch((e) => { if (active) setError(e.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
   if (loading)

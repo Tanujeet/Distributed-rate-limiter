@@ -34,5 +34,5 @@ export interface EndpointAnalytics {
 export interface IpAnalytics {
   ip: string;
   requestCount: number;
-  isBlocked: boolean; // NOTE: backend doesn't return this — always false for now
+  isBlocked: boolean;
 }

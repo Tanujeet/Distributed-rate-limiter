@@ -21,14 +21,7 @@ export async function rateLimit(
   }
 
   try {
-    const forwarded = (req.headers["x-forwarded-for"] as string)
-      ?.split(",")[0]
-      ?.trim();
-    const identifier =
-      (req.headers["x-user-id"] as string) ||
-      forwarded ||
-      req.ip ||
-      "anonymous";
+    const identifier = req.ip || "anonymous";
     const endpoint = req.originalUrl.split("?")[0];
 
     const result = await checkRateLimit({
@@ -42,7 +35,7 @@ export async function rateLimit(
     ); // 👈
 
     const now = new Date();
-    const timeBucket = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    const timeBucket = now.toISOString().slice(0, 16) + ":00Z";
 
     const pipeline = redis.pipeline();
     pipeline.incr(RedisKeys.globalRequests());
@@ -59,7 +52,7 @@ export async function rateLimit(
       pipeline.hincrby(`analytics:timeline:global:blocked`, timeBucket, 1);
     }
 
-    await pipeline.exec();
+    await pipeline.exec().catch(console.error);
 
     console.log(
       `[METRIC] Pipeline exec total: ${Date.now() - middlewareStart}ms`,
@@ -83,6 +76,6 @@ export async function rateLimit(
     next();
   } catch (error) {
     console.error("Rate limiter error:", error);
-    next();
+    res.status(503).json({ success: false, error: "Rate limiter unavailable" });
   }
 }

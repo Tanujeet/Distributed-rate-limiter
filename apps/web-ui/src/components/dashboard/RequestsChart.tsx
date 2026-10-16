@@ -42,7 +42,11 @@ export function RequestsChart({ data }: { data: ChartData[] }) {
       <CardContent className="px-2 pb-4 sm:px-6">
         {/* Replaced inline style with responsive Tailwind heights */}
         <div className="h-[250px] w-full sm:h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            initialDimension={{ width: 300, height: 250 }}
+          >
             <LineChart
               data={data}
               margin={{ top: 5, right: 10, left: -15, bottom: 0 }}

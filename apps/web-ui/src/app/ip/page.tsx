@@ -43,7 +43,7 @@ export default function IpPage() {
           IP & Identifier Analytics
         </h1>
         <p className="text-sm text-muted-foreground sm:text-base">
-          Investigate specific client IPs or user API keys.
+          Investigate specific client IPs.
         </p>
       </div>
 
@@ -105,7 +105,7 @@ export default function IpPage() {
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Current Enforced Status
+                Status for /api/test/limited
               </CardTitle>
               {data.isBlocked ? (
                 <ShieldAlert className="h-5 w-5 text-destructive" />
